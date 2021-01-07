@@ -2,7 +2,7 @@ import asyncio
 import json
 from copy import deepcopy
 from inspect import signature
-from typing import Optional, Any, List, Dict, Sequence, Tuple, Type, Callable, Awaitable
+from typing import Optional, Any, List, Dict, Sequence, Tuple, Type
 
 from .context import Context
 from .converter import BaseConverter
@@ -14,6 +14,7 @@ from .response import Response
 from .router import Method
 from .router import Router
 from .serializers import BaseEncoder
+from .logger import logger
 
 
 class StartMiddleware(BaseMiddleware):
@@ -140,8 +141,9 @@ class JsonRpcServer:
         """
         try:
             body, _context = await self.converter.unpack_request(*args, **kwargs)
-        except:
-            return
+        except Exception as error:
+            logger.error(error)
+            raise
 
         response = None
         if type(_context.body) == list:
@@ -164,8 +166,6 @@ class JsonRpcServer:
         :param context:
         :return:
         """
-        # FIXME: check how depends context on bach query? maybe I shouldn't use deepcopy? just rewrite body?
-        #       I think we can get problem with context and many concurrent workers
         _context = deepcopy(context)
         _context.request_data = jsonrpc_request
         _context.method_name = jsonrpc_request.get("method")
@@ -178,9 +178,7 @@ class JsonRpcServer:
             )
             return None
 
-        result: Response = await self.middleware_stack(
-            _context
-        )
+        result: Response = await self.middleware_stack(_context)
 
         response = {"jsonrpc": "2.0", "id": jsonrpc_request.get("id")}
 

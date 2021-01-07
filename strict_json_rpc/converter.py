@@ -1,4 +1,5 @@
 from typing import Union, Tuple, Dict, List
+
 from .context import Context
 
 
@@ -12,5 +13,7 @@ class BaseConverter:
         raise NotImplementedError()
 
     @classmethod
-    async def pack_batch_response(cls, response: List[Tuple[Union[Dict, List], Context]]):
+    async def pack_batch_response(
+        cls, response: List[Tuple[Union[Dict, List], Context]]
+    ):
         raise NotImplementedError()
